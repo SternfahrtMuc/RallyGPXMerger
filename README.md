@@ -6,6 +6,7 @@ A web tool to merge GPX tracks for big bike rallies written in React and TypeScr
 ## Current deployment
 https://sebastianhanfland.github.io/RallyGPXMerger/
 
+
 ## Functionality
 For organizing a rally, it is helpful to automate the time calculation for the different routes.
 
