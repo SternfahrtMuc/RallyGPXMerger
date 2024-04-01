@@ -2,14 +2,18 @@ import { useDispatch, useSelector } from 'react-redux';
 import { MutableRefObject, useEffect } from 'react';
 import { LayerGroup } from 'leaflet';
 import { addTracksToLayer } from '../../common/map/addTrackToMap.ts';
-import { getShowMapMarker, mapActions } from '../store/map.reducer.ts';
+import { getHighlightedTrack, getShowMapMarker, mapActions } from '../store/map.reducer.ts';
 import { getSelectedTracks, getSelectedVersions, getZipTracks } from '../store/zipTracks.reducer.ts';
 
-export function zipTracksDisplayHook(calculatedTracksLayer: MutableRefObject<LayerGroup | null>) {
+export function zipTracksDisplayHook(
+    calculatedTracksLayer: MutableRefObject<LayerGroup | null>,
+    showMarkerOverwrite?: boolean
+) {
     const zipTracks = useSelector(getZipTracks);
-    const showMarker = useSelector(getShowMapMarker);
+    const showMarker = useSelector(getShowMapMarker) || !!showMarkerOverwrite;
     const selectedVersions = useSelector(getSelectedVersions);
     const selectedTracks = useSelector(getSelectedTracks);
+    const highlightedTrack = useSelector(getHighlightedTrack);
     const dispatch = useDispatch();
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
@@ -21,14 +25,21 @@ export function zipTracksDisplayHook(calculatedTracksLayer: MutableRefObject<Lay
             }
             return tracksOfVersion.filter((track) => selectedTracks[version]?.includes(track.id));
         });
-        addTracksToLayer(calculatedTracksLayer, tracks, true, {
+        const tracksToDisplay = highlightedTrack ? tracks.filter((track) => track.id === highlightedTrack) : tracks;
+        addTracksToLayer(calculatedTracksLayer, tracksToDisplay, true, {
             showMarker,
             onlyShowBreaks: true,
-            opacity: 0.7,
+            opacity: highlightedTrack ? 1 : 0.7,
             clickCallBack: (track) => {
                 dispatch(mapActions.setShowTrackInfo(true));
                 dispatch(mapActions.setShowSingleTrackInfo(track.id));
             },
+            mouseInCallBack: (track) => {
+                dispatch(mapActions.setHighlightedTrack(track.id));
+            },
+            mouseOutCallBack: () => {
+                dispatch(mapActions.setHighlightedTrack());
+            },
         });
-    }, [zipTracks, zipTracks.length, selectedTracks, selectedVersions, showMarker]);
+    }, [zipTracks, zipTracks.length, selectedTracks, selectedVersions, showMarker, highlightedTrack]);
 }

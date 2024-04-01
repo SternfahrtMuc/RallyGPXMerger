@@ -1,10 +1,10 @@
 import { Point, Track } from 'gpxparser';
 import L, { LayerGroup } from 'leaflet';
-import { SimpleGPX } from '../../utils/SimpleGPX.ts';
 import { getColorFromUuid } from '../../utils/colorUtil.ts';
 import { breakIcon, endIcon, startIcon } from '../MapIcons.ts';
 import { getTimeDifferenceInSeconds } from '../../utils/dateUtil.ts';
 import { CalculatedTrack, GpxSegment, isZipTrack, ZipTrack } from '../types.ts';
+import { getGpx } from './gpxCache.ts';
 
 function toLatLng(point: Point): { lat: number; lng: number } {
     return { lat: point.lat, lng: point.lon };
@@ -17,6 +17,8 @@ export interface MapOptions {
     opacity?: number;
     weight?: number;
     clickCallBack?: (track: GpxSegment | CalculatedTrack | ZipTrack) => void;
+    mouseInCallBack?: (track: GpxSegment | CalculatedTrack | ZipTrack) => void;
+    mouseOutCallBack?: (track: GpxSegment | CalculatedTrack | ZipTrack) => void;
 }
 
 function addStartAndBreakMarker(
@@ -55,7 +57,7 @@ function addStartAndBreakMarker(
 }
 
 export function addTrackToMap(gpxSegment: CalculatedTrack | GpxSegment, routeLayer: LayerGroup, options: MapOptions) {
-    const gpx = SimpleGPX.fromString(gpxSegment.content);
+    const gpx = getGpx(gpxSegment);
     let lastTrack: Track | null = null;
     gpx.tracks.forEach((track) => {
         const trackPoints = track.points.map(toLatLng);
@@ -70,9 +72,23 @@ export function addTrackToMap(gpxSegment: CalculatedTrack | GpxSegment, routeLay
         if (clickCallBack) {
             connection.on('click', () => {
                 clickCallBack(gpxSegment);
-                console.log('here...');
             });
         }
+
+        const mouseInCallBack = options?.mouseInCallBack;
+        if (mouseInCallBack) {
+            connection.on('mouseover', () => {
+                mouseInCallBack(gpxSegment);
+            });
+        }
+
+        const mouseOutCallBack = options?.mouseOutCallBack;
+        if (mouseOutCallBack) {
+            connection.on('mouseout', () => {
+                mouseOutCallBack(gpxSegment);
+            });
+        }
+
         connection.addTo(routeLayer);
         if (options.onlyShowBreaks) {
             addStartAndBreakMarker(options, lastTrack, trackPoints, gpxSegment, routeLayer, track);
