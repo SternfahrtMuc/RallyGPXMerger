@@ -5,6 +5,7 @@ export interface TrackNodeSegment {
     segmentId: string;
     trackId: string;
     amount: number;
+    trackIdInsteadOfSegmentId?: boolean;
 }
 
 export interface TrackNode {
@@ -43,6 +44,13 @@ export function listAllNodesOfTracks(trackCompositions: TrackComposition[]): Tra
                     segmentId: segmentIdBeforeNode,
                     trackId: track.id,
                     amount: track?.peopleCount ?? 0,
+                });
+            } else if (indexOfSegment === 0) {
+                segmentsBeforeNode.push({
+                    segmentId: track.id,
+                    trackId: track.id,
+                    amount: track?.peopleCount ?? 0,
+                    trackIdInsteadOfSegmentId: true,
                 });
             }
         });
