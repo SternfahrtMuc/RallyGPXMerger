@@ -24,6 +24,7 @@ import { FormattedMessage } from 'react-intl';
 import { getRequestProgress } from '../../logic/resolving/selectors/requestEstimator.ts';
 import { getCalculatedTracks } from '../../store/calculatedTracks.reducer.ts';
 import { useEffect } from 'react';
+import { gpxSegmentsActions } from '../../store/gpxSegments.reducer.ts';
 
 export function StreetStatus(props: { done: boolean; loading: boolean }) {
     if (props.loading) {
@@ -101,6 +102,20 @@ export function DashboardStreetsContent({ showClearButton }: { showClearButton?:
                 >
                     <FormattedMessage id={'msg.streetNames'} /> *
                 </Button>
+                {showClearButton && (
+                    <Button
+                        size={'sm'}
+                        onClick={(event) => {
+                            event.stopPropagation();
+                            dispatch(geoCodingActions.clearStreetNames());
+                            dispatch(gpxSegmentsActions.setAllSegmentsToUnresolved());
+                        }}
+                        variant={'danger'}
+                        disabled={ongoingRequests || hasNoTrack}
+                    >
+                        <FormattedMessage id={'msg.clearStreetNames'} />
+                    </Button>
+                )}
                 <StreetStatus done={streetsDone} loading={isLoadingStreetData} />
             </div>
             {requestProgress !== undefined && (
